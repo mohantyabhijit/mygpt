@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/rs/cors"
 	"io"
 	"log"
 	"net/http"
@@ -17,9 +18,17 @@ const generateApiEndpoint = "api/generate"
 const generateApi = baseUrl + generateApiEndpoint
 
 func main() {
-	http.HandleFunc("/", promptHandler)
+	// Create a new ServeMux
+	mux := http.NewServeMux()
 
-	log.Fatal(http.ListenAndServe("localhost:8080", nil))
+	// Define a simple handler function
+	mux.HandleFunc("/", promptHandler)
+
+	// Create a new handler with the CORS middleware
+	handler := cors.Default().Handler(mux)
+
+	// Start the server on port 8080
+	log.Fatal(http.ListenAndServe("localhost:8080", handler))
 }
 
 func promptHandler(w http.ResponseWriter, r *http.Request) {
@@ -43,7 +52,11 @@ func promptHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Printf("error while extracting prompt response  : %v\n", err)
 	}
 
-	fmt.Println(promptResponse)
+	if promptResponse != "" {
+		w.Header().Set("Content-Type", "text/plain")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(promptResponse))
+	}
 }
 
 func extractPromptResponse(resp []byte) (string, error) {
@@ -96,9 +109,6 @@ func createPrompt(userPrompt string) (*http.Request, error) {
 }
 
 func parseRequest(r *http.Request) (string, error) {
-
-	fmt.Println(r.Body)
-
 	userPrompt, err := io.ReadAll(r.Body)
 	if err != nil {
 		fmt.Printf("error while reading request body : %v\n", err)
