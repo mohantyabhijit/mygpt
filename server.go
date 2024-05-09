@@ -18,16 +18,11 @@ const generateApiEndpoint = "api/generate"
 const generateApi = baseUrl + generateApiEndpoint
 
 func main() {
-	// Create a new ServeMux
 	mux := http.NewServeMux()
-
-	// Define a simple handler function
 	mux.HandleFunc("/", promptHandler)
 
-	// Create a new handler with the CORS middleware
 	handler := cors.Default().Handler(mux)
 
-	// Start the server on port 8080
 	log.Fatal(http.ListenAndServe("localhost:8080", handler))
 }
 
